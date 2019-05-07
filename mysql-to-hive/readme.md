@@ -38,7 +38,9 @@ Note - 在此以及所有其他选项卡中，将未列出的属性保留为其�
 **注意：** 启用“`高级`”选项卡上的“`创建JDBC命名空间标题`”属性 - 如果没有它，Hive元数据处理器将无法使用Decimal类型！此模式使用传入记录中的字段类型信息在Hive中创建相应的模式。从JDBC读取的数据库记录包含此信息，从Avro或SDC数据格式的文件或消息队列中读取的记录也是如此，但分隔的数据格式则不包含。在提取分隔数据文件时，该解决方案仍会创建Hive表，但默认情况下，所有列都将具有STRING类型。生产环境建议配置管道 Error Records (错误日志)输出至文件/队列中。
 具体如下：
 
+![1](https://user-images.githubusercontent.com/32835617/57267868-41179700-70b4-11e9-8f7f-51b4053a6902.png)
 
+![2](https://user-images.githubusercontent.com/32835617/57267871-41b02d80-70b4-11e9-8fca-27da05d5c477.png)
 
 配置Hive Metadata处理器
 ---
@@ -57,7 +59,7 @@ chown -R sdc:sdc hadoop-conf
 ```
 **Note：** 测试环境中 SDC reources directory 为平台中StreamSets配置 Resources directory 路径，path to hadoop config 和 path to hive config 位于 /etc/hadoop/conf 和 /etc/hive/conf
 #### Hive选项卡
-*	**JDBC URL:** 它具有表单，`jdbc:hive2://localhost:10000/default`但可能会因您的环境而异。<br>特别是:如果您使用具有默认配置的MapR，则需要在URL中指定用户名和密码，因此:`jdbc:hive2://localhost:10000/default;user=<username>;password=<password>`。<br>如果使用Kerberos，则可能需要添加主体参数以指定Hive Kerberos用户。<br>测试环境:`jdbc:hive2://dcc-nn2.dcc.com:10001/cqxs;principal=hive/dcc-nn2.dcc.com@DCC.COM`
+* **JDBC URL:** 它具有表单，`jdbc:hive2://localhost:10000/default`但可能会因您的环境而异。<br>特别是:如果您使用具有默认配置的MapR，则需要在URL中指定用户名和密码，因此:`jdbc:hive2://localhost:10000/default;user=<username>;password=<password>`。<br>如果使用Kerberos，则可能需要添加主体参数以指定Hive Kerberos用户。<br>测试环境:`jdbc:hive2://dcc-nn2.dcc.com:10001/cqxs;principal=hive/dcc-nn2.dcc.com@DCC.COM`
   
 * **JDBC Driver Name:** 对于Apache Hadoop环境，这将是`org.apache.hive.jdbc.HiveDriver`，否则您应该为您的分发指定特定的驱动程序类。
 * **Hadoop Configuration Directory:** `hadoop-conf`
@@ -68,6 +70,8 @@ chown -R sdc:sdc hadoop-conf
 
 注意使用`${record:attribute('jdbc.tables')}`作为表名 - 这将通过管道将MySQL表名传递给Hive。
 具体如下：
+
+![3](https://user-images.githubusercontent.com/32835617/57267872-4248c400-70b4-11e9-948c-2cd613ca9ac8.png)
 
 Hive元数据处理器在其＃1输出流和＃2上的元数据上发出数据记录。
 
@@ -99,8 +103,11 @@ Hadoop FS
 我们将文件中的Max Records设置为1，因此目标在写入每条记录后立即关闭文件，因为我们希望立即查看数据。如果我们保留了默认值，我们可能会在Hive写入后一小时内看不到Hive中的某些数据。这可能适用于生产部署，但是这将是一个非常耗时的教程！
 具体如下：
 
+![4](https://user-images.githubusercontent.com/32835617/57267873-4379f100-70b4-11e9-9487-cd24c772375a.png)
 
+![5](https://user-images.githubusercontent.com/32835617/57267874-4379f100-70b4-11e9-9b2d-250d3ea2215c.png)
 
+![6](https://user-images.githubusercontent.com/32835617/57267875-44128780-70b4-11e9-8fd2-c24479ad85ef.png)
 
 Hive Metastore
 ---
@@ -116,10 +123,14 @@ Hive Metastore
 
 运行
 ---
+![7](https://user-images.githubusercontent.com/32835617/57267876-44ab1e00-70b4-11e9-98d8-c39f2705f78b.png)
+
 输入2条，输出3条，为什么多一条输出呢？
 2个数据记录被发送到Hadoop或MapR FS目的地，而1个元数据记录被发送到Hive Metastore，其中包含创建表的指令。
 SDC没有通知Impala元数据更改，因此在我们第一次查询表之前需要使用`invalidate metadata`命令。
 添加2条新纪录，过几秒记录计数会增加
+
+![8](https://user-images.githubusercontent.com/32835617/57267878-4543b480-70b4-11e9-8ed3-c4eedd458ee3.png)
 
 还有三个数据记录输出，但由于架构未更改，因此不再生成元数据记录。转到Impala Shell并查询表 - 可以使用refresh，而不是更昂贵的invalidate，因为表结构没有改变 - 只是添加了新的数据文件。
 如果修改表结构，添加两个字段`ALTER TABLE mysql2hive ADD COLUMN latitude DECIMAL(8,6), ADD COLUMN longitude DECIMAL(9,6);`<br>
@@ -127,6 +138,8 @@ SDC没有通知Impala元数据更改，因此在我们第一次查询表之前�
 `INSERT INTO mysql2hive(station_code,latitude,longitude) VALUES('NA06',29.538607,106.473115);
 INSERT INTO mysql2hive(station_code,latitude,longitude) VALUES('NB02',29.652442,107.353779);`
 几秒钟后，SDC监控面板将显示6条输入记录和8条输出记录 - 另外2条数据记录和4条以前的元数据记录：
+
+![9](https://user-images.githubusercontent.com/32835617/57267879-4543b480-70b4-11e9-8014-93304f4cbe25.png)
 
 在Impala Shell中，您需要再次刷新Impala的缓存，然后才能看到表中的其他列。
 
