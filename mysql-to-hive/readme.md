@@ -2,6 +2,9 @@ StreamSets 实现 MySQL 增量更新到 Hive
 ===
 过程包括三个 SDC 阶段：Hive Metadata processor、Hive Metastore destination、Hadoop FS or MapR FS destinations
 
+![image_0](https://user-images.githubusercontent.com/32835617/57267584-327cb000-70b3-11e9-8541-9ef1307692b9.png)
+![image_1](https://user-images.githubusercontent.com/32835617/57267586-33154680-70b3-11e9-86a3-6f8ffef4c006.png)
+
 Hive Metadate 元数据处理器和 Hive Metastore 目标协同工作，以协调传入记录结构与Hive中相应表模式之间的任何差异。如果该表尚不存在，则创建该表。如果传入记录中的字段不作为Hive表中的列存在，则更新Hive架构以匹配新记录结构。
 
 创建源表
