@@ -68,10 +68,18 @@ chown -R sdc:sdc hadoop-conf
 * **Table Name:** `${record:attribute('jdbc.tables')}`
 * **分区配置:** 点击“ - ”按钮删除dt条目。没有使用。
 
+如果使用分区，则需建立分区表，配置如下：
+#### Partition Configuration标签
+* **Partition Column Name:** `day_batch_date` - 分区的名称
+* **Partition Value Type:** `STRING` - 分区字段的类型
+* **Partition Value Expression:** `${record:value('/trade_date')}` - obtain partition value from record(注意分区名称和 record 的字段名称不能相同)
+
+![3](https://user-images.githubusercontent.com/32835617/61018067-13a6dc80-a3c8-11e9-935c-950c34c4e49a.png)
+
 注意使用`${record:attribute('jdbc.tables')}`作为表名 - 这将通过管道将MySQL表名传递给Hive。
 具体如下：
 
-![3](https://user-images.githubusercontent.com/32835617/57267872-4248c400-70b4-11e9-948c-2cd613ca9ac8.png)
+![4](https://user-images.githubusercontent.com/32835617/57267872-4248c400-70b4-11e9-948c-2cd613ca9ac8.png)
 
 Hive元数据处理器在其＃1输出流和＃2上的元数据上发出数据记录。
 
@@ -103,11 +111,11 @@ Hadoop FS
 我们将文件中的Max Records设置为1，因此目标在写入每条记录后立即关闭文件，因为我们希望立即查看数据。如果我们保留了默认值，我们可能会在Hive写入后一小时内看不到Hive中的某些数据。这可能适用于生产部署，但是这将是一个非常耗时的教程！
 具体如下：
 
-![4](https://user-images.githubusercontent.com/32835617/57267873-4379f100-70b4-11e9-9487-cd24c772375a.png)
+![5](https://user-images.githubusercontent.com/32835617/57267873-4379f100-70b4-11e9-9487-cd24c772375a.png)
 
-![5](https://user-images.githubusercontent.com/32835617/57267874-4379f100-70b4-11e9-9b2d-250d3ea2215c.png)
+![6](https://user-images.githubusercontent.com/32835617/57267874-4379f100-70b4-11e9-9b2d-250d3ea2215c.png)
 
-![6](https://user-images.githubusercontent.com/32835617/57267875-44128780-70b4-11e9-8fd2-c24479ad85ef.png)
+![7](https://user-images.githubusercontent.com/32835617/57267875-44128780-70b4-11e9-8fd2-c24479ad85ef.png)
 
 Hive Metastore
 ---
@@ -123,14 +131,14 @@ Hive Metastore
 
 运行
 ---
-![7](https://user-images.githubusercontent.com/32835617/57267876-44ab1e00-70b4-11e9-98d8-c39f2705f78b.png)
+![8](https://user-images.githubusercontent.com/32835617/57267876-44ab1e00-70b4-11e9-98d8-c39f2705f78b.png)
 
 输入2条，输出3条，为什么多一条输出呢？
 2个数据记录被发送到Hadoop或MapR FS目的地，而1个元数据记录被发送到Hive Metastore，其中包含创建表的指令。
 SDC没有通知Impala元数据更改，因此在我们第一次查询表之前需要使用`invalidate metadata`命令。
 添加2条新纪录，过几秒记录计数会增加
 
-![8](https://user-images.githubusercontent.com/32835617/57267878-4543b480-70b4-11e9-8ed3-c4eedd458ee3.png)
+![9](https://user-images.githubusercontent.com/32835617/57267878-4543b480-70b4-11e9-8ed3-c4eedd458ee3.png)
 
 还有三个数据记录输出，但由于架构未更改，因此不再生成元数据记录。转到Impala Shell并查询表 - 可以使用refresh，而不是更昂贵的invalidate，因为表结构没有改变 - 只是添加了新的数据文件。
 如果修改表结构，添加两个字段`ALTER TABLE mysql2hive ADD COLUMN latitude DECIMAL(8,6), ADD COLUMN longitude DECIMAL(9,6);`<br>
@@ -139,7 +147,7 @@ SDC没有通知Impala元数据更改，因此在我们第一次查询表之前�
 INSERT INTO mysql2hive(station_code,latitude,longitude) VALUES('NB02',29.652442,107.353779);`
 几秒钟后，SDC监控面板将显示6条输入记录和8条输出记录 - 另外2条数据记录和4条以前的元数据记录：
 
-![9](https://user-images.githubusercontent.com/32835617/57267879-4543b480-70b4-11e9-8014-93304f4cbe25.png)
+![10](https://user-images.githubusercontent.com/32835617/57267879-4543b480-70b4-11e9-8014-93304f4cbe25.png)
 
 在Impala Shell中，您需要再次刷新Impala的缓存，然后才能看到表中的其他列。
 
